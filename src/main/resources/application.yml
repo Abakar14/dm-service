@@ -1,36 +1,140 @@
-# application.yml (Base Configuration)
 spring:
-    application:
-        name: dm-service
-    profiles:
-        active: dev
-    servlet:
-        multipart:
-            enabled: true
-    main:
-        allow-bean-definition-overriding: true
-# other common properties
+  application:
+    name: dm-service
+  messages:
+    basename: i18n.messages
+    encoding: utf-8
+    fallback-to-system-locale: false
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+        default-page-size: 20
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  jpa:
+    open-in-view: false
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        default_schema: dm_schema
+        format_sql: true
+        generate_statistics: false
+    hibernate:
+      ddl-auto: validate  # We will use Flyway for schema management
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: dm_schema
+    validate-on-migrate: true
+    baseline-on-migrate: true
+    clean-disabled: true
+    out-of-order: true
+    connect-retries: 15
+  web:
+    locale-resolver: accept_header
+    resources:
+      static-locations: classpath:/static/, classpath:/public/
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 server:
-    servlet:
-        context-path: /dss/api/v1/
-eureka:
-    client:
-        service-url:
-            defaultZone: http://localhost:8761/eureka/
-logging:
-    level:
-        org:
-            springframework:
-                web: DEBUG
-                security: DEBUG
+  port: 8084
+  shutdown: graceful
+  servlet:
+    context-path: /api/v1
+    encoding:
+      charset: utf-8
+      enabled: true
+      force: true
 
-# Secret key
-jwt:
-    secret:
-        key: 8KvVu4Bn2KwBNX1MdnXY6VaRVLekVxurk3aaJxnzdCuZL6AHEL0EnnAOYLZtHWUr
-    access:
-        token:
-            expiration: 1800000 # 30 min in milliseconds for token expiration time
-    refresh:
-        token:
-            expiration: 604800000 # 7 days in milliseconds
+eureka:
+  client:
+    healthcheck:
+      enabled: true
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: false
+    hostname: dm-service
+    instance-id: ${spring.application.name}:${random.value}
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+springdoc:
+  swagger-ui:
+    path: /api-doc
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    serviceregistry:
+      access: unrestricted
+    health:
+      show-details: when_authorized
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.bytmasoft.dm: INFO
+    org.springframework: INFO
+    com.netflix.eureka: WARN
+    com.netflix.discovery: WARN
+
+
+file:
+  storage:
+    upload:
+      location: ${FILE_STORAGE_LOCATION:../storage}
+      max-file-size: 5MB
+      max-total-size: 20MB
+      max-files: 5
+    document:
+      supportedFileTypes:
+        - pdf
+        - docx
+        - jpg
+        - jpeg
+        - png
+        - gif
+        - webp
+      allowedMimeTypes:
+        - application/pdf
+        - image/jpeg
+        - image/png
+        - image/gif
+        - image/webp
+      allowSvg: false
+    limits:
+      max-image-width: 4096
+      max-image-height: 4096
+      max-image-pixels: 16000000
+      max-aspect-ratio: 40.0
+      enable-structural-validation: true
+      enable-signature-validation: true
+      enable-rate-limiting: true
+    download:
+      thumbUrl: /bff/public/dm/files
+      downloadUrl: /bff/public/dm/files
+    cleanup:
+      enabled: false
+      trashRetentionDays: 14
+      cron: 0 15 3 * * *
+
+dm:
+  security:
+    public-downloads-enabled: true
+    public-image-cache-max-age-seconds: 604800
+    internal-shared-secret: ${DM_INTERNAL_SHARED_SECRET}
+    internal-shared-secret-header: X-Internal-Secret
+    enforce-owner-match-for-owner-type-user: true

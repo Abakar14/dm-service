@@ -1,0 +1,42 @@
+server:
+  port: 8084
+
+spring:
+  config:
+    activate:
+      on-profile: local
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 20MB
+  # Datasource Configuration
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/dalilak_db?currentSchema=dm_schema}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: DalilakHikariPool
+      connection-timeout: 30000
+      maximum-pool-size: 15
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      schema: dm_schema
+      leak-detection-threshold: 60000
+
+eureka:
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+
+
+logging:
+  level:
+    org.springframework.boot.context.config: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.bytmasoft.dm: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: TRACE
